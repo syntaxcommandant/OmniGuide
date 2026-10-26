@@ -10,8 +10,8 @@
 
 body {
   margin: 0;
-  background-color: #070B14;
-  color: #F1F5F9;
+  background-color: #081426;
+  color: #F4F7FB;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -20,36 +20,29 @@ body {
 
 /* Custom modern scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0F19;
+  background: #081426;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: #162A42;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #233E60;
 }
 
-/* Glassmorphism and glow utility classes */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(30, 41, 59, 0.8);
-}
-
+/* Subtle enterprise glow */
 .teal-glow {
-  box-shadow: 0 0 20px -5px rgba(20, 184, 166, 0.25);
+  box-shadow: 0 0 25px -5px rgba(32, 201, 183, 0.2);
 }
 
 .teal-border-glow:focus {
-  border-color: #14B8A6;
-  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+  border-color: #20C9B7;
+  box-shadow: 0 0 0 2px rgba(32, 201, 183, 0.2);
 }
