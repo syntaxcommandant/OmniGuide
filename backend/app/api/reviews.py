@@ -1,6 +1,8 @@
+import json
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core.database import get_db
@@ -18,6 +20,7 @@ from app.services.retrieval import guideline_retriever
 from app.services.rule_engine import rule_engine
 from app.services.gemini_service import gemini_service, GeminiServiceError
 from app.services.evidence_validator import evidence_validator
+from app.services.review_reporter import generate_review_report_markdown, generate_review_report_json
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +140,7 @@ def start_review(payload: ReviewCreate, db: Session = Depends(get_db)):
                 page_num = rc.page_number
                 break
 
+        provenance_str = json.dumps(vf.evidence_provenance) if vf.evidence_provenance else None
         finding_obj = Finding(
             review_id=review.id,
             category=vf.category,
@@ -148,6 +152,8 @@ def start_review(payload: ReviewCreate, db: Session = Depends(get_db)):
             guideline_document_name=doc_name,
             guideline_page_number=page_num,
             evidence_status=vf.evidence_status,
+            evidence_tier=vf.evidence_tier or "VERIFIED",
+            evidence_provenance=provenance_str,
             suggested_fix=vf.suggested_fix,
             decision_status="pending"
         )
@@ -308,6 +314,24 @@ def update_revised_content(
     db.commit()
     db.refresh(review)
     return ReviewResponse.model_validate(review)
+
+
+@router.get("/{review_id}/report", response_class=PlainTextResponse)
+def get_review_report(review_id: str, db: Session = Depends(get_db)):
+    """Exports a structured markdown governance audit report for a single copy review."""
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if not review:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found.")
+    return generate_review_report_markdown(review)
+
+
+@router.get("/{review_id}/report/json", response_model=Dict[str, Any])
+def get_review_report_json(review_id: str, db: Session = Depends(get_db)):
+    """Exports a structured machine-readable JSON governance audit report matching persisted records."""
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if not review:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found.")
+    return generate_review_report_json(review)
 
 
 @router.delete("/{review_id}", status_code=status.HTTP_204_NO_CONTENT)

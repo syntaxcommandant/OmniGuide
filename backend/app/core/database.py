@@ -28,8 +28,24 @@ def get_db():
 
 
 def init_db():
-    """Initializes all database tables."""
+    """Initializes all database tables and ensures non-breaking schema additions."""
     import app.models.guideline  # noqa: F401
     import app.models.review  # noqa: F401
+    import app.models.campaign  # noqa: F401
     Base.metadata.create_all(bind=engine)
+
+    # Safe migration for new evidence provenance columns on findings
+    try:
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            cursor = conn.execute(text("PRAGMA table_info(findings)"))
+            cols = [row[1] for row in cursor.fetchall()]
+            if cols:
+                if "evidence_tier" not in cols:
+                    conn.execute(text("ALTER TABLE findings ADD COLUMN evidence_tier VARCHAR(50) DEFAULT 'VERIFIED'"))
+                if "evidence_provenance" not in cols:
+                    conn.execute(text("ALTER TABLE findings ADD COLUMN evidence_provenance TEXT DEFAULT NULL"))
+    except Exception as e:
+        logger.debug(f"Migration note: {e}")
+
     logger.info("Database tables initialized successfully.")

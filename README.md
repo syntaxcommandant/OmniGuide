@@ -1,8 +1,8 @@
-# OmniGuide — AI Brand Governance That Explains, Not Just Rejects
+# OmniGuide — AI-Powered Brand Governance Platform
 
-**Team:** NovaForge  
-**Tagline:** AI brand governance that explains, not just rejects.  
-**Built for:** National Hackathon 2026
+**Product Name:** OmniGuide  
+**Primary Tagline:** "Governance, Guided by Intelligence."  
+**Supporting Message:** "Every claim checked. Every decision explained."  
 
 ---
 
@@ -73,7 +73,7 @@ OmniGuide helps organisations audit and govern marketing content before publicat
 2. **Step 2 — Submit Marketing Content:**
    - Review title, content type, marketing draft copy, optional campaign context.
    - Choice between Hybrid Mode (Gemini Flash + Deterministic rules) and Deterministic Mode.
-   - Pre-loaded hackathon evaluation scenarios with one-click buttons.
+   - Pre-loaded benchmark governance evaluation scenarios with one-click buttons.
 
 3. **Step 3 — 5-Stage Hybrid Governance Pipeline:**
    - **Stage A:** Deterministic regex scans for absolute superlatives, banned words, and metric claims.

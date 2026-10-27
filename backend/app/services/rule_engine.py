@@ -68,7 +68,27 @@ DETERMINISTIC_RULES: List[DeterministicRule] = [
         guideline_ref="SEC-3.2"
     ),
 
-    # 3. Required Brand Terminology
+    # 3. Missing Required Disclaimers & Promotional Claims
+    DeterministicRule(
+        category="missing_required_disclaimer",
+        severity="Medium",
+        pattern=re.compile(r'\b(free\s+trial|completely\s+free|100%\s+free)\b', re.IGNORECASE),
+        explanation_template="Promotional claim '{match}' requires an explicit disclaimer qualification (e.g., 'Terms & eligibility apply') to prevent misleading advertising sanctions.",
+        suggested_fix_template="Qualify with terms: '{match} (terms apply)'.",
+        guideline_ref="SEC-2.3"
+    ),
+
+    # 4. Contradictory Pricing / Mandatory Fee Assertions
+    DeterministicRule(
+        category="contradictory_campaign_claims",
+        severity="High",
+        pattern=re.compile(r'\b(mandatory\s+annual|annual\s+enterprise\s+contract|mandatory\s+contract)\b', re.IGNORECASE),
+        explanation_template="Asserting '{match}' in promotional contexts creates contractual ambiguity unless paired with explicit commercial terms.",
+        suggested_fix_template="Specify clear enterprise tier terms.",
+        guideline_ref="SEC-2.4"
+    ),
+
+    # 5. Required Brand Terminology
     DeterministicRule(
         category="required_terminology",
         severity="Low",

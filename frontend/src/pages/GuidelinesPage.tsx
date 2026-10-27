@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BookOpen,
   Upload,
-  FileText,
   Plus,
   Trash2,
   CheckCircle2,
@@ -11,8 +10,9 @@ import {
   Download,
   Database,
   Search,
-  Layers,
-  FileCheck
+  ChevronDown,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 import { api } from '../services/api';
 import { GuidelineDocument, ApprovedFact } from '../types';
@@ -21,13 +21,18 @@ export const GuidelinesPage: React.FC = () => {
   const [documents, setDocuments] = useState<GuidelineDocument[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<GuidelineDocument | null>(null);
   const [approvedFacts, setApprovedFacts] = useState<ApprovedFact[]>([]);
-  const [activeTab, setActiveTab] = useState<'upload' | 'manual' | 'facts'>('upload');
+  const [activeTab, setActiveTab] = useState<'documents' | 'upload' | 'facts'>('documents');
 
   // Form states
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [manualTitle, setManualTitle] = useState('');
   const [manualContent, setManualContent] = useState('');
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [showTechDetails, setShowTechDetails] = useState(false);
+  const [showPdfProcessingExpl, setShowPdfProcessingExpl] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
   const [factText, setFactText] = useState('');
   const [factCategory, setFactCategory] = useState('performance');
   const [factSource, setFactSource] = useState('');
@@ -38,7 +43,7 @@ export const GuidelinesPage: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [clauseSearch, setClauseSearch] = useState('');
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [docs, facts] = await Promise.all([api.getGuidelines(), api.getApprovedFacts()]);
       setDocuments(docs);
@@ -50,11 +55,11 @@ export const GuidelinesPage: React.FC = () => {
     } catch (err: any) {
       console.error('Error fetching guidelines:', err);
     }
-  };
+  }, [selectedDoc]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleSelectDoc = async (id: string) => {
     try {
@@ -87,6 +92,7 @@ export const GuidelinesPage: React.FC = () => {
       setUploadFile(null);
       await loadData();
       setSelectedDoc(newDoc);
+      setActiveTab('documents');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to extract text from PDF.');
     } finally {
@@ -119,6 +125,7 @@ export const GuidelinesPage: React.FC = () => {
       setManualContent('');
       await loadData();
       setSelectedDoc(newDoc);
+      setActiveTab('documents');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to save manual guideline.');
     } finally {
@@ -181,55 +188,67 @@ export const GuidelinesPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-navy-800">
+    <div className="space-y-6 animate-fadeIn">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-            <BookOpen className="w-6 h-6 text-teal-400" />
-            Brand Standards & Approved Facts
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <BookOpen className="w-6 h-6 text-teal-600" />
+            <span>Guidelines & Approved Facts</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Manage ground-truth policy documents, indexed clause citations, and registered corporate metrics.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Manage ground-truth brand policies, indexed clause citations, and verified corporate facts.
           </p>
         </div>
 
         <a
           href="/demo_guideline.pdf"
           download="novaforge_governance_v2.4.pdf"
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-navy-850 hover:bg-navy-800 border border-teal-500/40 text-teal-300 text-xs font-semibold self-start sm:self-auto transition-colors"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold self-start sm:self-auto transition-colors cursor-pointer"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-3.5 h-3.5 text-slate-500" />
           <span>Download Sample PDF</span>
         </a>
       </div>
 
       {/* Notifications */}
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-sm flex items-start gap-3 shadow-md">
-          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
           <div>
-            <div className="font-bold">Guideline Error</div>
-            <div className="text-xs text-rose-200 mt-0.5 leading-relaxed">{errorMsg}</div>
+            <div className="font-bold">Guideline Notice</div>
+            <div className="text-xs text-red-700 mt-0.5">{errorMsg}</div>
           </div>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-xl bg-teal-500/15 border border-teal-500/40 text-teal-300 text-sm flex items-center gap-2 shadow-sm">
-          <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs sm:text-sm flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      {/* Workspace Tabs */}
-      <div className="flex border-b border-navy-800 space-x-2">
+      {/* Clearly Separated Tabs per Section 8 */}
+      <div className="flex border-b border-slate-200 space-x-2">
+        <button
+          onClick={() => { setActiveTab('documents'); setErrorMsg(null); }}
+          className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-lg transition-colors flex items-center gap-2 cursor-pointer ${
+            activeTab === 'documents'
+              ? 'bg-white text-teal-800 border-t-2 border-t-teal-600 border-x border-slate-200 shadow-2xs'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>Guideline Documents & Clauses</span>
+        </button>
+
         <button
           onClick={() => { setActiveTab('upload'); setErrorMsg(null); }}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-lg transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === 'upload'
-              ? 'bg-navy-900 text-teal-300 border-t border-x border-navy-800'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-teal-800 border-t-2 border-t-teal-600 border-x border-slate-200 shadow-2xs'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <Upload className="w-4 h-4" />
@@ -237,23 +256,11 @@ export const GuidelinesPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => { setActiveTab('manual'); setErrorMsg(null); }}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors flex items-center gap-2 cursor-pointer ${
-            activeTab === 'manual'
-              ? 'bg-navy-900 text-teal-300 border-t border-x border-navy-800'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>Paste Guidelines Manually</span>
-        </button>
-
-        <button
           onClick={() => { setActiveTab('facts'); setErrorMsg(null); }}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-lg transition-colors flex items-center gap-2 cursor-pointer ${
             activeTab === 'facts'
-              ? 'bg-navy-900 text-teal-300 border-t border-x border-navy-800'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-white text-teal-800 border-t-2 border-t-teal-600 border-x border-slate-200 shadow-2xs'
+              : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <Database className="w-4 h-4" />
@@ -261,37 +268,185 @@ export const GuidelinesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Tab 1: Upload PDF */}
+      {/* Tab 1: Documents & Clauses Browser */}
+      {activeTab === 'documents' && (
+        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Active Guideline Document</h2>
+              <p className="text-xs text-slate-500">
+                Select document to inspect clauses cited during marketing content audits.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-medium">Select Document:</span>
+              <select
+                value={selectedDoc?.id || ''}
+                onChange={(e) => handleSelectDoc(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-800 focus-ring"
+              >
+                {documents.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.title} {d.is_demo ? '(Active Standard)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedDoc ? (
+            <div className="space-y-4">
+              {/* Document Summary Card */}
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-slate-900">{selectedDoc.title}</span>
+                    {selectedDoc.is_demo && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase">
+                        Verified Baseline
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 font-mono">
+                    File: {selectedDoc.filename} • {selectedDoc.clauses?.length || selectedDoc.clause_count || 0} Clauses Indexed
+                  </p>
+                </div>
+
+                {!selectedDoc.is_demo && (
+                  <button
+                    onClick={() => handleDeleteDoc(selectedDoc.id)}
+                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-red-50 border border-red-200 text-red-700 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Document</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Optional Technical Extraction Details per Section 8 */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowTechDetails(!showTechDetails)}
+                  className="text-xs text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  {showTechDetails ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                  <span>{showTechDetails ? 'Hide' : 'Show'} Technical Extraction Details</span>
+                </button>
+
+                {showTechDetails && (
+                  <div className="mt-2 p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 font-mono space-y-1 animate-fadeIn">
+                    <div>Parser: PyMuPDF 2.0 digital stream reader</div>
+                    <div>Extraction Method: Header regex boundary splitting + clause ID detection</div>
+                    <div>Page Tracking: 1-indexed physical PDF coordinate bounding</div>
+                    <div>Indexing: Lexical BM25 index + exact clause key storage in SQLite/PostgreSQL</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Clause Search Filter */}
+              <div className="relative max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={clauseSearch}
+                  onChange={(e) => setClauseSearch(e.target.value)}
+                  placeholder="Search extracted clauses by ID, heading, or keyword..."
+                  className="w-full pl-9 pr-3.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus-ring"
+                />
+              </div>
+
+              {/* Clauses List */}
+              <div className="space-y-3">
+                {filteredClauses?.map((c) => (
+                  <div
+                    key={c.id}
+                    className="p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 transition-colors shadow-2xs"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
+                          {c.clause_identifier}
+                        </span>
+                        {c.section_heading && (
+                          <span className="text-xs font-semibold text-slate-800">
+                            {c.section_heading}
+                          </span>
+                        )}
+                      </div>
+                      {c.page_number && (
+                        <span className="text-[11px] text-slate-500 font-mono px-2 py-0.5 rounded bg-slate-50 border border-slate-200">
+                          Page {c.page_number}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed pl-2 border-l-2 border-teal-500">
+                      {c.clause_text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-400 text-sm">
+              No guideline document selected.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 2: Upload PDF Guidelines & Manual Entry */}
       {activeTab === 'upload' && (
-        <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800 shadow-sm">
-          <h2 className="text-base font-bold text-white mb-1">Upload Digital PDF Guidelines</h2>
-          <p className="text-xs text-slate-400 mb-5">
-            PyMuPDF parses searchable text page-by-page, extracts identifiable clauses, and indexes them with page references.
-          </p>
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Upload Digital PDF Guidelines</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              PyMuPDF parses searchable text page-by-page, extracts identifiable clauses, and indexes them with page references.
+            </p>
+          </div>
 
           <form onSubmit={handleUploadSubmit} className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Guideline Document Title <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Guideline Document Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
                 placeholder="e.g. Acme Corp Global Brand & Compliance Standard 2026"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-750 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus-ring"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                PDF Document File <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                PDF Document File <span className="text-red-500">*</span>
               </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-navy-750 border-dashed rounded-2xl bg-navy-950/60 hover:border-teal-500/50 transition-colors">
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  if (e.dataTransfer.files?.[0]) {
+                    setUploadFile(e.dataTransfer.files[0]);
+                  }
+                }}
+                className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-xl transition-colors ${
+                  isDragging
+                    ? 'border-teal-500 bg-teal-50/50'
+                    : 'border-slate-300 bg-slate-50/60 hover:border-teal-500'
+                }`}
+              >
                 <div className="space-y-2 text-center">
-                  <FileUp className="mx-auto h-8 w-8 text-teal-400" />
-                  <div className="flex text-xs text-slate-400">
-                    <label className="relative cursor-pointer rounded font-medium text-teal-400 hover:text-teal-300">
+                  <FileUp className="mx-auto h-8 w-8 text-teal-600" />
+                  <div className="flex text-xs text-slate-600">
+                    <label className="relative cursor-pointer rounded font-medium text-teal-700 hover:text-teal-800">
                       <span>Choose a PDF file</span>
                       <input
                         type="file"
@@ -302,109 +457,156 @@ export const GuidelinesPage: React.FC = () => {
                     </label>
                     <p className="pl-1 text-slate-500">or drag and drop</p>
                   </div>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-500">
                     {uploadFile ? (
-                      <span className="text-teal-300 font-semibold">{uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)</span>
+                      <span className="text-teal-800 font-semibold">{uploadFile.name} ({(uploadFile.size / 1024).toFixed(1)} KB)</span>
                     ) : (
-                      'Digital PDF up to 15MB. Note: Scanned/image-only PDFs require digital searchable text.'
+                      'Digital PDF up to 15MB. Note: Requires searchable digital text.'
                     )}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-navy-950 border border-navy-800 text-[11px] text-slate-400 leading-relaxed">
-              <span className="font-semibold text-slate-300">Scanned PDF Policy:</span> If an uploaded PDF contains no extractable digital text (e.g., scanned photographs of documents), OmniGuide returns an explicit limitation notice rather than pretending extraction succeeded.
+            {/* Compact Expandable Section: How PDF processing works */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowPdfProcessingExpl(!showPdfProcessingExpl)}
+                className="w-full p-3.5 text-left flex items-center justify-between text-xs font-semibold text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Info className="w-4 h-4 text-teal-600" />
+                  <span>How PDF processing works</span>
+                </div>
+                {showPdfProcessingExpl ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
+              </button>
+
+              {showPdfProcessingExpl && (
+                <div className="px-4 pb-4 text-xs space-y-2.5 border-t border-slate-200/80 pt-3 animate-fadeIn">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
+                    <div>• <strong className="text-slate-800">Accepted Format:</strong> Searchable PDF (.pdf)</div>
+                    <div>• <strong className="text-slate-800">Maximum File Size:</strong> 15 MB (enforced by backend)</div>
+                    <div>• <strong className="text-slate-800">Text Requirement:</strong> Digital text stream (OCR not supported)</div>
+                    <div>• <strong className="text-slate-800">Scanned PDF Policy:</strong> Scanned image-only PDFs trigger an explicit notice</div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200/60 text-[11px] text-slate-500 leading-relaxed">
+                    <strong className="text-slate-700">What happens after upload:</strong> PyMuPDF extracts text page-by-page, parses clause identifiers (e.g. SEC-1.1), persists page references to the database, and indexes them for BM25 retrieval during content audits.
+                  </div>
+                </div>
+              )}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-navy-950 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-teal-500/20"
+              className="px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-xs focus-ring"
             >
-              <Upload className="w-4 h-4 stroke-[2.5]" />
-              <span>{loading ? 'Extracting Clauses with PyMuPDF...' : 'Upload & Extract Clauses'}</span>
+              <Upload className="w-4 h-4" />
+              <span>{loading ? 'Extracting Clauses...' : 'Upload & Extract Clauses'}</span>
             </button>
           </form>
-        </div>
-      )}
 
-      {/* Tab 2: Manual Entry */}
-      {activeTab === 'manual' && (
-        <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800 shadow-sm">
-          <h2 className="text-base font-bold text-white mb-1">Paste Guidelines Text Directly</h2>
-          <p className="text-xs text-slate-400 mb-5">
-            Paste your company brand policy text. Sections (e.g. "Section 1.1", "Rule 3") will be automatically parsed into stable clauses.
-          </p>
-
-          <form onSubmit={handleManualSubmit} className="space-y-4 max-w-2xl">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Guideline Title <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={manualTitle}
-                onChange={(e) => setManualTitle(e.target.value)}
-                placeholder="e.g. Social Media Brand Governance Rules 2026"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-750 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Guideline Content <span className="text-rose-400">*</span>
-              </label>
-              <textarea
-                rows={8}
-                value={manualContent}
-                onChange={(e) => setManualContent(e.target.value)}
-                placeholder={`Section 1.1 Comparative Superlatives\nMarketing materials must never claim #1 or fastest without audited 3rd party benchmark reports.\n\nSection 2.1 Warranties\nStatements like 100% guaranteed are prohibited without published SLA contracts.`}
-                className="w-full p-4 rounded-xl bg-navy-950 border border-navy-750 text-sm text-slate-100 placeholder-slate-500 font-mono text-xs focus:outline-none focus:border-teal-500"
-              />
-            </div>
-
+          {/* Optional Manual Entry Toggle */}
+          <div className="pt-4 border-t border-slate-200">
             <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-navy-950 font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-teal-500/20"
+              type="button"
+              onClick={() => setShowManualEntry(!showManualEntry)}
+              className="text-xs text-teal-700 hover:text-teal-800 font-semibold flex items-center gap-1 cursor-pointer"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>{loading ? 'Processing...' : 'Save & Extract Clauses'}</span>
+              {showManualEntry ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              <span>Or Paste Guidelines Text Manually</span>
             </button>
-          </form>
+
+            {showManualEntry && (
+              <form onSubmit={handleManualSubmit} className="mt-4 space-y-4 max-w-xl animate-fadeIn">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Guideline Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={manualTitle}
+                    onChange={(e) => setManualTitle(e.target.value)}
+                    placeholder="e.g. Social Media Brand Governance Rules 2026"
+                    className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus-ring"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Guideline Content <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={manualContent}
+                    onChange={(e) => setManualContent(e.target.value)}
+                    placeholder={`Section 1.1 Comparative Superlatives\nMarketing materials must never claim #1 or fastest without audited 3rd party benchmark reports.\n\nSection 2.1 Warranties\nStatements like 100% guaranteed are prohibited without published SLA contracts.`}
+                    className="w-full p-3 rounded-lg bg-white border border-slate-300 text-xs font-mono text-slate-900 placeholder-slate-400 focus-ring"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-2 cursor-pointer shadow-xs focus-ring"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{loading ? 'Processing...' : 'Save & Extract Clauses'}</span>
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Tab 3: Approved Facts Library */}
+      {/* Tab 3: Approved Corporate Facts */}
       {activeTab === 'facts' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-navy-900 border border-navy-800 shadow-sm">
-            <h2 className="text-base font-bold text-white mb-1">Register Approved Corporate Fact</h2>
-            <p className="text-xs text-slate-400 mb-5">
-              Specific quantitative metrics (e.g. "42ms latency", "99.95% uptime") in marketing copy must match a registered fact to be verified as grounded.
+          {/* How Approved Facts Work per Part 6 */}
+          <div className="p-4 rounded-xl bg-teal-50/80 border border-teal-200 text-xs space-y-1.5 text-teal-950">
+            <div className="font-bold text-teal-900 flex items-center gap-1.5">
+              <Info className="w-4 h-4 text-teal-600" />
+              <span>Separation of Approved Facts & Guideline Policies</span>
+            </div>
+            <p className="text-slate-700 leading-relaxed">
+              <strong>Brand Guidelines</strong> define behavioral rules (e.g., Section 1.1 prohibiting unverified superlatives and Section 2.2 requiring evidence for numerical claims). <strong>Approved Corporate Facts</strong> provide the verified benchmark figures (e.g., "42ms benchmark latency"). When marketing copy asserts numerical metrics, OmniGuide checks if that claim is backed by a registered corporate fact.
             </p>
+          </div>
+
+          {/* Add Fact Form */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Register Approved Corporate Fact</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Quantitative metrics (e.g. "42ms latency", "99.9% uptime") in draft marketing copy must match an approved fact to be verified as grounded.
+              </p>
+            </div>
 
             <form onSubmit={handleAddFact} className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Fact Statement <span className="text-rose-400">*</span>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Fact Statement <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={factText}
                   onChange={(e) => setFactText(e.target.value)}
                   placeholder="e.g. NovaForge benchmark latency is 42ms for enterprise workloads."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-750 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus-ring"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Category</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Category</label>
                 <select
                   value={factCategory}
                   onChange={(e) => setFactCategory(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-750 text-sm text-slate-100 focus:outline-none focus:border-teal-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 focus-ring"
                 >
                   <option value="performance">Performance & Speed</option>
                   <option value="reliability">Reliability & SLA</option>
@@ -414,7 +616,7 @@ export const GuidelinesPage: React.FC = () => {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Source Reference / Audit Report
                 </label>
                 <input
@@ -422,49 +624,49 @@ export const GuidelinesPage: React.FC = () => {
                   value={factSource}
                   onChange={(e) => setFactSource(e.target.value)}
                   placeholder="e.g. TechAudit Labs Benchmark TA-2026-01"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-navy-950 border border-navy-750 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                  className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus-ring"
                 />
               </div>
 
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="w-full px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-navy-950 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-teal-500/20"
+                  className="w-full py-2 px-4 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs focus-ring"
                 >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <Plus className="w-4 h-4" />
                   <span>Register Fact</span>
                 </button>
               </div>
             </form>
           </div>
 
-          {/* List of Approved Facts */}
-          <div className="rounded-2xl bg-navy-900 border border-navy-800 p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-white mb-4">
+          {/* Facts List */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <h3 className="text-sm font-bold text-slate-900">
               Registered Approved Facts ({approvedFacts.length})
             </h3>
             <div className="space-y-3">
               {approvedFacts.map((fact) => (
                 <div
                   key={fact.id}
-                  className="p-4 rounded-xl bg-navy-950 border border-navy-800 flex items-start justify-between gap-4"
+                  className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-start justify-between gap-4"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs uppercase font-bold px-2 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                      <span className="text-xs uppercase font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
                         {fact.category || 'Fact'}
                       </span>
                       {fact.source_reference && (
-                        <span className="text-[11px] text-slate-400 font-mono">
+                        <span className="text-[11px] text-slate-500 font-mono">
                           Source: {fact.source_reference}
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 text-sm text-slate-200 font-medium">"{fact.fact_text}"</p>
+                    <p className="mt-1.5 text-sm text-slate-900 font-medium">"{fact.fact_text}"</p>
                   </div>
                   <button
                     onClick={() => handleDeleteFact(fact.id)}
-                    className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                    className="p-1.5 text-slate-400 hover:text-red-600 transition-colors cursor-pointer rounded"
                     title="Remove Fact"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -475,109 +677,7 @@ export const GuidelinesPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Explorer / Clauses Browser */}
-      <div className="rounded-2xl bg-navy-900 border border-navy-800 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <div>
-            <h2 className="text-base font-bold text-white">Active Guideline Clause Repository</h2>
-            <p className="text-xs text-slate-400">
-              Select a document to inspect individual extracted clauses cited by the AI governance engine.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedDoc?.id || ''}
-              onChange={(e) => handleSelectDoc(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-navy-950 border border-navy-750 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
-            >
-              {documents.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.title} {d.is_demo ? '(Demo Standard)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {selectedDoc ? (
-          <div>
-            <div className="p-4 rounded-xl bg-navy-950 border border-navy-800/80 mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-white">{selectedDoc.title}</span>
-                  {selectedDoc.is_demo && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30 uppercase">
-                      Official Demo Dataset
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Source: <span className="font-mono text-slate-300">{selectedDoc.filename}</span> • Total Clauses:{' '}
-                  <span className="text-teal-300 font-semibold">{selectedDoc.clauses?.length || selectedDoc.clause_count || 0}</span>
-                </p>
-              </div>
-
-              {!selectedDoc.is_demo && (
-                <button
-                  onClick={() => handleDeleteDoc(selectedDoc.id)}
-                  className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Document</span>
-                </button>
-              )}
-            </div>
-
-            {/* Clause Search Filter */}
-            <div className="mb-4">
-              <input
-                type="text"
-                value={clauseSearch}
-                onChange={(e) => setClauseSearch(e.target.value)}
-                placeholder="Search extracted clauses by ID, heading, or keyword..."
-                className="w-full max-w-md px-3.5 py-2 rounded-xl bg-navy-950 border border-navy-750 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500"
-              />
-            </div>
-
-            {/* Clauses List */}
-            <div className="space-y-3">
-              {filteredClauses?.map((c) => (
-                <div
-                  key={c.id}
-                  className="p-4 rounded-xl bg-navy-950/70 border border-navy-800 hover:border-navy-750 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-teal-500/15 text-teal-300 border border-teal-500/30">
-                        {c.clause_identifier}
-                      </span>
-                      {c.section_heading && (
-                        <span className="text-xs font-semibold text-slate-200">
-                          {c.section_heading}
-                        </span>
-                      )}
-                    </div>
-                    {c.page_number && (
-                      <span className="text-[11px] text-slate-400 font-mono px-2 py-0.5 rounded bg-navy-850 border border-navy-750">
-                        Page {c.page_number}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-1.5 border-l-2 border-teal-500/50">
-                    {c.clause_text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="py-12 text-center text-slate-400 text-sm">
-            No guideline document selected.
-          </div>
-        )}
-      </div>
     </div>
   );
 };
+

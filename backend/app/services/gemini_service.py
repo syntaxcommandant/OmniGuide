@@ -17,11 +17,50 @@ class GeminiServiceError(Exception):
 
 class GeminiAnalysisService:
     def __init__(self):
-        self.api_key = settings.GEMINI_API_KEY
-        self.model_name = settings.GEMINI_MODEL
+        self._connectivity_cache: Optional[tuple] = None
+
+    @property
+    def api_key(self) -> str:
+        return settings.GEMINI_API_KEY
+
+    @property
+    def model_name(self) -> str:
+        return settings.GEMINI_MODEL
 
     def is_configured(self) -> bool:
         return bool(self.api_key and self.api_key.strip() and self.api_key != "YOUR_GEMINI_API_KEY_HERE")
+
+    def check_connectivity(self, force: bool = False) -> tuple[bool, str]:
+        """
+        Performs a real backend connectivity check to Google Gemini API.
+        Does not generate tokens or perform inference; verifies model access.
+        Caches result for 60 seconds unless force=True.
+        """
+        import time
+        now = time.time()
+        if not force and self._connectivity_cache:
+            cache_time, cached_ok, cached_msg = self._connectivity_cache
+            if now - cache_time < 60:
+                return cached_ok, cached_msg
+
+        if not self.is_configured():
+            res = (False, "GEMINI_API_KEY is not configured in backend environment.")
+            self._connectivity_cache = (now, res[0], res[1])
+            return res
+
+        try:
+            client = genai.Client(api_key=self.api_key)
+            # Lightweight verification without generating tokens
+            client.models.get(model=self.model_name)
+            res = (True, f"Connected to {self.model_name} successfully.")
+            self._connectivity_cache = (now, res[0], res[1])
+            return res
+        except Exception as e:
+            err_msg = str(e)
+            logger.warning(f"Gemini connectivity check failed: {err_msg}")
+            res = (False, f"Gemini connection failed: {err_msg}")
+            self._connectivity_cache = (now, res[0], res[1])
+            return res
 
     def analyze_marketing_content(
         self,

@@ -7,6 +7,8 @@ import { NewReviewPage } from './pages/NewReviewPage';
 import { ReviewResultsPage } from './pages/ReviewResultsPage';
 import { ReviewHistoryPage } from './pages/ReviewHistoryPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { CampaignSimulatorPage } from './pages/CampaignSimulatorPage';
+import { RedTeamPage } from './pages/RedTeamPage';
 
 export const App: React.FC = () => {
   return (
@@ -14,6 +16,8 @@ export const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="simulator" element={<CampaignSimulatorPage />} />
+          <Route path="redteam" element={<RedTeamPage />} />
           <Route path="guidelines" element={<GuidelinesPage />} />
           <Route path="reviews/new" element={<NewReviewPage />} />
           <Route path="reviews/:id" element={<ReviewResultsPage />} />

@@ -21,7 +21,7 @@ def test_system_status(client):
 def test_canonical_superlative_review_workflow(client):
     # Test canonical input: "India's #1 fastest tool for Indian teams."
     payload = {
-        "title": "National Hackathon Demo Test",
+        "title": "National Benchmark Review Test",
         "content_type": "Social Ad Copy",
         "content": "India's #1 fastest tool for Indian teams.",
         "campaign_context": "National Launch Q1 2026",

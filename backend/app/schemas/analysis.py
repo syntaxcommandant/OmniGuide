@@ -17,6 +17,14 @@ class AIFindingItem(BaseModel):
         default="verified",
         description="'verified' if backed by stored clause, 'insufficient_evidence' if cannot be proven, 'missing_approved_source' if metric lacks approved facts record"
     )
+    evidence_tier: Optional[str] = Field(
+        default="VERIFIED",
+        description="One of 'VERIFIED', 'UNSUPPORTED', 'CONTRADICTED', 'NEEDS_HUMAN_REVIEW'"
+    )
+    evidence_provenance: Optional[dict] = Field(
+        default=None,
+        description="Source provenance dictionary with source_id, source_title, relevant_excerpt, document_reference, and timestamp"
+    )
 
 
 class AIAnalysisResult(BaseModel):

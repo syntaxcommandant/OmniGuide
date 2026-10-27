@@ -4,6 +4,11 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+_CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+_BACKEND_DIR = os.path.abspath(os.path.join(_CONFIG_DIR, "..", ".."))
+_ROOT_DIR = os.path.abspath(os.path.join(_BACKEND_DIR, ".."))
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "OmniGuide"
     VERSION: str = "1.0.0"
@@ -16,7 +21,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
     GROQ_API_KEY: str = ""
-    AI_PROVIDER: str = "gemini"  # "gemini" or "deterministic"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    AI_PROVIDER: str = "gemini"  # "gemini", "groq", or "deterministic"
     DEFAULT_ANALYSIS_MODE: str = "hybrid"  # "hybrid" or "deterministic"
 
     # Uploads
@@ -53,7 +59,11 @@ class Settings(BaseSettings):
         return ["*"]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(
+            os.path.join(_ROOT_DIR, ".env"),
+            os.path.join(_BACKEND_DIR, ".env"),
+            ".env",
+        ),
         env_file_encoding="utf-8",
         extra="ignore"
     )

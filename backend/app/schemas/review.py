@@ -33,6 +33,8 @@ class FindingResponse(BaseModel):
     guideline_document_name: Optional[str] = None
     guideline_page_number: Optional[int] = None
     evidence_status: str
+    evidence_tier: Optional[str] = "VERIFIED"
+    evidence_provenance: Optional[str] = None
     suggested_fix: str
     decision_status: str
     user_custom_fix: Optional[str] = None

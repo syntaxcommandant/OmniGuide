@@ -35,6 +35,7 @@ export type FindingCategory =
   | 'missing_approved_source';
 
 export type SeverityLevel = 'High' | 'Medium' | 'Low';
+export type Severity = SeverityLevel;
 export type EvidenceStatus = 'verified' | 'insufficient_evidence' | 'missing_approved_source' | 'deterministic_rule';
 export type DecisionStatus = 'pending' | 'accepted' | 'edited' | 'dismissed';
 export type ReviewOverallStatus = 'compliant' | 'needs_review' | 'resolved' | 'flagged';
@@ -93,6 +94,27 @@ export interface ReviewListItem {
   resolved_count: number;
 }
 
+export type ProviderState =
+  | 'NOT_CONFIGURED'
+  | 'CONFIGURED_NOT_TESTED'
+  | 'OPERATIONAL'
+  | 'CONNECTION_FAILED'
+  | 'RATE_LIMITED'
+  | 'PROVIDER_ERROR';
+
+export interface ProviderHealthStatus {
+  provider_name: string;
+  display_name: string;
+  state: ProviderState;
+  model_name: string;
+  is_configured: boolean;
+  is_operational: boolean;
+  last_tested_at?: string | null;
+  latency_ms?: number | null;
+  safe_message: string;
+  is_active: boolean;
+}
+
 export interface SystemStatus {
   status: string;
   version: string;
@@ -105,6 +127,7 @@ export interface SystemStatus {
   clauses_count: number;
   approved_facts_count: number;
   reviews_count: number;
+  providers?: Record<string, ProviderHealthStatus>;
 }
 
 export interface DemoScenario {
@@ -115,4 +138,150 @@ export interface DemoScenario {
   campaign_context: string;
   description: string;
   expected_findings: string[];
+}
+
+// ==========================================
+// FEATURE 1: CAMPAIGN LAUNCH SIMULATOR TYPES
+// ==========================================
+
+export type LaunchGatePolicy = 'strict' | 'standard' | 'permissive';
+export type LaunchGateStatus = 'blocked' | 'needs_review' | 'launch_ready';
+export type EvidenceTier = 'verified_violation' | 'unsupported_claim' | 'potential_violation' | 'compliant_grounded';
+export type RemediationStatus = 'unresolved' | 'remediated' | 'waived';
+
+export interface CampaignFinding {
+  id: string;
+  channel: string;
+  category: string;
+  severity: Severity;
+  original_excerpt: string;
+  explanation: string;
+  guideline_ref?: string | null;
+  suggested_fix: string;
+  evidence_status: EvidenceTier;
+  evidence_quote?: string | null;
+  source: 'deterministic' | 'ai';
+  remediation_status: RemediationStatus;
+  remediation_notes?: string | null;
+}
+
+export interface ChannelContentResult {
+  id?: string;
+  channel: string;
+  original_content: string;
+  revised_content: string;
+  channel_readiness_score: number;
+  channel_status: 'compliant' | 'needs_review' | 'flagged';
+  findings: CampaignFinding[];
+}
+
+export interface CrossChannelIssue {
+  issue_type: string;
+  channels_involved: string[];
+  description: string;
+  suggested_harmonization: string;
+  severity: Severity;
+}
+
+export interface ScoringBreakdown {
+  baseline_score: number;
+  total_deductions: number;
+  high_severity_deductions: number;
+  medium_severity_deductions: number;
+  low_severity_deductions: number;
+  cross_channel_deductions: number;
+  remediation_restored: number;
+  final_score: number;
+  scoring_formula_explanation: string;
+}
+
+export interface CampaignAudit {
+  id: string;
+  name: string;
+  brand_name: string;
+  target_audience?: string | null;
+  channels: string[];
+  launch_gate_policy: LaunchGatePolicy;
+  status: LaunchGateStatus;
+  launch_readiness_score: number;
+  blocking_violations_count: number;
+  warnings_count: number;
+  remediated_count: number;
+  scoring_breakdown: ScoringBreakdown;
+  cross_channel_issues: CrossChannelIssue[];
+  channel_contents: ChannelContentResult[];
+  findings: CampaignFinding[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CampaignTemplate {
+  id: string;
+  name: string;
+  brand_name: string;
+  target_audience: string;
+  launch_gate_policy: LaunchGatePolicy;
+  channels: string[];
+  channel_contents: Record<string, string>;
+}
+
+// ==========================================
+// FEATURE 3: BRAND RED-TEAM SIMULATOR TYPES
+// ==========================================
+
+export interface RedTeamTestCase {
+  id: string;
+  title: string;
+  category: string;
+  adversarial_vector: string;
+  untrusted_input: string;
+  expected_to_violate: boolean;
+  expected_severity?: Severity | null;
+  expected_categories: string[];
+  defense_explanation: string;
+}
+
+export interface RedTeamCaseResult {
+  case_id: string;
+  title: string;
+  category: string;
+  adversarial_vector: string;
+  untrusted_input: string;
+  expected_to_violate: boolean;
+  expected_severity?: string | null;
+  actual_findings_count: number;
+  actual_findings: Array<{
+    category: string;
+    severity: string;
+    original_excerpt: string;
+    guideline_ref?: string | null;
+    suggested_fix: string;
+  }>;
+  evaluation_status: 'PASS_TRUE_POSITIVE' | 'PASS_TRUE_NEGATIVE' | 'FAIL_FALSE_POSITIVE' | 'FAIL_FALSE_NEGATIVE';
+  defense_explanation: string;
+}
+
+export interface ConfusionMatrix {
+  true_positives: number;
+  false_positives: number;
+  true_negatives: number;
+  false_negatives: number;
+}
+
+export interface RedTeamMetrics {
+  precision: number;
+  recall: number;
+  f1_score: number;
+  critical_violation_detection_rate: number;
+  prompt_injection_defense_rate: number;
+}
+
+export interface RedTeamEvaluationResult {
+  evaluation_timestamp: string;
+  execution_duration_ms: number;
+  total_test_cases: number;
+  confusion_matrix: ConfusionMatrix;
+  metrics: RedTeamMetrics;
+  case_results: RedTeamCaseResult[];
+  evaluation_verdict: string;
 }

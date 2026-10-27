@@ -4,8 +4,13 @@ import {
   Review,
   ReviewListItem,
   SystemStatus,
+  ProviderHealthStatus,
   DemoScenario,
-  DecisionStatus
+  DecisionStatus,
+  CampaignAudit,
+  CampaignTemplate,
+  RedTeamTestCase,
+  RedTeamEvaluationResult
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -39,6 +44,18 @@ export const api = {
   async getStatus(): Promise<SystemStatus> {
     const res = await fetch(`${API_BASE}/status`);
     return handleResponse<SystemStatus>(res);
+  },
+
+  async getProvidersHealth(): Promise<Record<string, ProviderHealthStatus>> {
+    const res = await fetch(`${API_BASE}/providers/health`);
+    return handleResponse<Record<string, ProviderHealthStatus>>(res);
+  },
+
+  async testProviderConnection(providerName: string): Promise<ProviderHealthStatus> {
+    const res = await fetch(`${API_BASE}/providers/test/${providerName}`, {
+      method: 'POST',
+    });
+    return handleResponse<ProviderHealthStatus>(res);
   },
 
   // Guidelines
@@ -154,6 +171,17 @@ export const api = {
     return handleResponse<Review>(res);
   },
 
+  async getReviewReport(id: string): Promise<string> {
+    const res = await fetch(`${API_BASE}/reviews/${id}/report`);
+    if (!res.ok) throw new Error('Failed to download review audit report');
+    return res.text();
+  },
+
+  async getReviewReportJson(id: string): Promise<Record<string, any>> {
+    const res = await fetch(`${API_BASE}/reviews/${id}/report/json`);
+    return handleResponse<Record<string, any>>(res);
+  },
+
   async deleteReview(id: string): Promise<void> {
     const res = await fetch(`${API_BASE}/reviews/${id}`, {
       method: 'DELETE',
@@ -172,5 +200,109 @@ export const api = {
       method: 'POST',
     });
     return handleResponse<{ message: string }>(res);
+  },
+
+  // ==========================================
+  // FEATURE 1: CAMPAIGN LAUNCH SIMULATOR API
+  // ==========================================
+  async getCampaignTemplates(): Promise<CampaignTemplate[]> {
+    const res = await fetch(`${API_BASE}/campaigns/templates`);
+    return handleResponse<CampaignTemplate[]>(res);
+  },
+
+  async simulateCampaign(data: {
+    name: string;
+    brand_name?: string;
+    target_audience?: string;
+    channels: string[];
+    channel_contents: Record<string, string>;
+    launch_gate_policy?: string;
+    analysis_mode?: string;
+  }): Promise<CampaignAudit> {
+    const res = await fetch(`${API_BASE}/campaigns/simulate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<CampaignAudit>(res);
+  },
+
+  async getCampaigns(): Promise<CampaignAudit[]> {
+    const res = await fetch(`${API_BASE}/campaigns`);
+    return handleResponse<CampaignAudit[]>(res);
+  },
+
+  async getCampaign(id: string): Promise<CampaignAudit> {
+    const res = await fetch(`${API_BASE}/campaigns/${id}`);
+    return handleResponse<CampaignAudit>(res);
+  },
+
+  async remediateCampaignFinding(
+    campaignId: string,
+    findingId: string,
+    data: { status: 'remediated' | 'waived'; custom_fix?: string; remediation_notes?: string }
+  ): Promise<CampaignAudit> {
+    const res = await fetch(`${API_BASE}/campaigns/${campaignId}/remediate/${findingId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<CampaignAudit>(res);
+  },
+
+  async reEvaluateCampaign(
+    campaignId: string,
+    data: { channel_contents?: Record<string, string>; launch_gate_policy?: string }
+  ): Promise<CampaignAudit> {
+    const res = await fetch(`${API_BASE}/campaigns/${campaignId}/re-evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<CampaignAudit>(res);
+  },
+
+  async getCampaignReport(id: string): Promise<string> {
+    const res = await fetch(`${API_BASE}/campaigns/${id}/report`);
+    if (!res.ok) throw new Error('Failed to download campaign audit report');
+    return res.text();
+  },
+
+  async getCampaignReportJson(id: string): Promise<Record<string, any>> {
+    const res = await fetch(`${API_BASE}/campaigns/${id}/report/json`);
+    return handleResponse<Record<string, any>>(res);
+  },
+
+  async deleteCampaign(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/campaigns/${id}`, {
+      method: 'DELETE',
+    });
+    return handleResponse<void>(res);
+  },
+
+  // ==========================================
+  // FEATURE 3: BRAND RED-TEAM SIMULATOR API
+  // ==========================================
+  async getRedTeamCases(): Promise<RedTeamTestCase[]> {
+    const res = await fetch(`${API_BASE}/redteam/cases`);
+    return handleResponse<RedTeamTestCase[]>(res);
+  },
+
+  async runRedTeamEvaluation(): Promise<RedTeamEvaluationResult> {
+    const res = await fetch(`${API_BASE}/redteam/run`, {
+      method: 'POST',
+    });
+    return handleResponse<RedTeamEvaluationResult>(res);
+  },
+
+  async getRedTeamReport(): Promise<string> {
+    const res = await fetch(`${API_BASE}/redteam/report`);
+    if (!res.ok) throw new Error('Failed to download red-team evaluation report');
+    return res.text();
+  },
+
+  async getRedTeamReportJson(): Promise<Record<string, any>> {
+    const res = await fetch(`${API_BASE}/redteam/report/json`);
+    return handleResponse<Record<string, any>>(res);
   },
 };

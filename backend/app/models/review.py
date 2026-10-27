@@ -64,6 +64,10 @@ class Finding(Base):
     evidence_status = Column(String(50), nullable=False, default="verified")
     # "verified", "insufficient_evidence", "missing_approved_source", "deterministic_rule"
 
+    evidence_tier = Column(String(50), nullable=False, default="VERIFIED")
+    # "VERIFIED", "UNSUPPORTED", "CONTRADICTED", "NEEDS_HUMAN_REVIEW"
+    evidence_provenance = Column(Text, nullable=True)  # JSON-encoded provenance dictionary
+
     suggested_fix = Column(Text, nullable=False)
     decision_status = Column(String(50), nullable=False, default="pending")
     # "pending", "accepted", "edited", "dismissed"

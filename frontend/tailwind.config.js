@@ -9,46 +9,66 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: '#081426',         // Primary background
-          surface: '#0D1B2E',    // Secondary background
-          card: '#112238',       // Card background
-          elevated: '#162A42',   // Elevated surfaces
-          teal: '#20C9B7',       // Primary accent
-          tealLight: '#34E0CE',
-          tealDark: '#129D8E',
-          cyan: '#38BDF8',       // Secondary accent
-          textPrimary: '#F4F7FB',
-          textSecondary: '#A7B5C8',
-          success: '#34D399',
-          warning: '#FBBF24',
-          critical: '#FB7185',
+          bg: '#F8FAFC',          // Soft off-white / light cool gray
+          surface: '#FFFFFF',     // Pure white cards
+          surfaceMuted: '#F1F5F9',// Subtle gray card / secondary surface
+          border: '#E2E8F0',      // Subtle cool gray border
+          borderDark: '#CBD5E1',  // Emphasized border
+          navy: '#0F172A',        // Deep navy brand
+          navyLight: '#1E293B',   // Navy surface
+          teal: '#0D9488',        // Sophisticated teal
+          tealHover: '#0F766E',   // Darker teal hover
+          tealLight: '#14B8A6',   // Bright teal accent
+          tealSubtle: '#F0FDFA',  // Soft teal tint
+          text: '#0F172A',        // Dark slate main text
+          textMuted: '#475569',   // Slate secondary text
+          textDim: '#64748B',     // Slate muted text
+          critical: '#DC2626',    // Restrained red
+          criticalBg: '#FEF2F2',
+          criticalBorder: '#FECACA',
+          warning: '#D97706',     // Amber
+          warningBg: '#FFFBEB',
+          warningBorder: '#FDE68A',
+          success: '#059669',     // Green
+          successBg: '#ECFDF5',
+          successBorder: '#A7F3D0',
         },
         navy: {
-          950: '#081426',
-          900: '#0D1B2E',
-          850: '#112238',
-          800: '#162A42',
-          750: '#1C3452',
-          700: '#233E60',
-          600: '#345277',
-          500: '#48668E',
+          950: '#0A0F1D',
+          900: '#0F172A',
+          850: '#152138',
+          800: '#1E293B',
+          750: '#2A3950',
+          700: '#334155',
+          600: '#475569',
+          500: '#64748B',
+          400: '#94A3B8',
+          300: '#CBD5E1',
+          200: '#E2E8F0',
+          100: '#F1F5F9',
+          50: '#F8FAFC',
         },
         teal: {
-          400: '#20C9B7',
-          500: '#17B2A1',
-          600: '#109687',
+          50: '#F0FDFA',
+          100: '#CCFBF1',
+          200: '#99F6E4',
+          300: '#5EEAD4',
+          400: '#2DD4BF',
+          500: '#14B8A6',
+          600: '#0D9488',
+          700: '#0F766E',
+          800: '#115E59',
+          900: '#134E4A',
         },
-        cyan: {
-          400: '#38BDF8',
-        }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {
-        'glow-teal': '0 0 25px -5px rgba(32, 201, 183, 0.25)',
-        'subtle': '0 4px 20px -2px rgba(8, 20, 38, 0.5)',
+        'card': '0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05)',
+        'card-hover': '0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06)',
+        'elevated': '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)',
       }
     },
   },

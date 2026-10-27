@@ -10,6 +10,8 @@ from app.api.health import router as health_router
 from app.api.guidelines import router as guidelines_router, facts_router
 from app.api.reviews import router as reviews_router
 from app.api.demo import router as demo_router
+from app.api.campaigns import router as campaigns_router
+from app.api.redteam import router as redteam_router
 
 # Configure logging
 logging.basicConfig(
@@ -67,6 +69,8 @@ app.include_router(health_router, prefix=settings.API_V1_PREFIX)
 app.include_router(guidelines_router, prefix=settings.API_V1_PREFIX)
 app.include_router(facts_router, prefix=settings.API_V1_PREFIX)
 app.include_router(reviews_router, prefix=settings.API_V1_PREFIX)
+app.include_router(campaigns_router, prefix=settings.API_V1_PREFIX)
+app.include_router(redteam_router, prefix=settings.API_V1_PREFIX)
 app.include_router(demo_router, prefix=settings.API_V1_PREFIX)
 
 
