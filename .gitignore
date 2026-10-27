@@ -13,9 +13,14 @@ node_modules/
 dist/
 .vite/
 
-# Environment
+# Environment & Secrets
 .env
-.env.local
+.env.*
+*.env
+backend/.env
+frontend/.env
+!.env.example
+!frontend/.env.example
 
 # OS
 .DS_Store

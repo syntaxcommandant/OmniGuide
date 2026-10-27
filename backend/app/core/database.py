@@ -36,14 +36,14 @@ def init_db():
 
     # Safe migration for new evidence provenance columns on findings
     try:
-        from sqlalchemy import text
-        with engine.begin() as conn:
-            cursor = conn.execute(text("PRAGMA table_info(findings)"))
-            cols = [row[1] for row in cursor.fetchall()]
-            if cols:
-                if "evidence_tier" not in cols:
+        from sqlalchemy import inspect, text
+        inspector = inspect(engine)
+        if "findings" in inspector.get_table_names():
+            existing_cols = [c["name"] for c in inspector.get_columns("findings")]
+            with engine.begin() as conn:
+                if "evidence_tier" not in existing_cols:
                     conn.execute(text("ALTER TABLE findings ADD COLUMN evidence_tier VARCHAR(50) DEFAULT 'VERIFIED'"))
-                if "evidence_provenance" not in cols:
+                if "evidence_provenance" not in existing_cols:
                     conn.execute(text("ALTER TABLE findings ADD COLUMN evidence_provenance TEXT DEFAULT NULL"))
     except Exception as e:
         logger.debug(f"Migration note: {e}")

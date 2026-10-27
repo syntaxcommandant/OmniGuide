@@ -13,7 +13,10 @@ import {
   RedTeamEvaluationResult
 } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const rawApiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const API_BASE = rawApiBase
+  ? (rawApiBase.endsWith('/api') ? rawApiBase.replace(/\/+$/, '') : `${rawApiBase.replace(/\/+$/, '')}/api`)
+  : '/api';
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
